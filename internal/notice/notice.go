@@ -4,17 +4,11 @@ import (
 	"fmt"
 
 	"github.com/hibiken/asynq"
-	"github.com/zeromicro/go-zero/core/stores/redis"
+	"github.com/jorahbi/notice/pkg/client"
 )
 
-type RdsConf struct {
-	Addr     string
-	Password string
-	PoolSize int
-}
-
 type Config struct {
-	RdsConf redis.RedisConf
+	RdsConf client.RdsConf
 }
 
 type ServiceContext struct {
@@ -27,12 +21,12 @@ func NewServiceContext(c Config) *ServiceContext {
 	}
 }
 
-func NewAsynqServer(c redis.RedisConf) *asynq.Server {
+func NewAsynqServer(c client.RdsConf) *asynq.Server {
 	return asynq.NewServer(
 		asynq.RedisClientOpt{
-			Addr:     c.Host,
-			Password: c.Pass,
-			PoolSize: 10,
+			Addr:     c.Addr,
+			Password: c.Password,
+			PoolSize: c.PoolSize,
 		},
 		asynq.Config{
 			IsFailure: func(err error) bool {

@@ -2,17 +2,22 @@ package client
 
 import (
 	"github.com/jorahbi/notice/internal/aqueue/jobtype"
-	"github.com/jorahbi/notice/internal/notice"
 
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
 
-type Client struct {
-	*asynq.Client
+type RdsConf struct {
+	Addr     string
+	Password string
+	PoolSize int
 }
 
-func NewAsynqClient(c notice.RdsConf) *Client {
+type Client struct {
+	aqueue *asynq.Client
+}
+
+func NewAsynqClient(c RdsConf) *Client {
 	return &Client{
 		asynq.NewClient(asynq.RedisClientOpt{
 			Addr:     c.Addr,
@@ -29,5 +34,13 @@ func (c Client) Send(payload any) (*asynq.TaskInfo, error) {
 	if data, err = jsonx.Marshal(payload); err != nil {
 		return nil, err
 	}
-	return c.Enqueue(asynq.NewTask(jobtype.JOB_KEY_WECHAT_NOTICE, data))
+	return c.aqueue.Enqueue(asynq.NewTask(jobtype.JOB_KEY_WECHAT_NOTICE, data))
+}
+
+func (c Client) Close() error {
+	return c.aqueue.Close()
+}
+
+func (c Client) Native() *asynq.Client {
+	return c.aqueue
 }
