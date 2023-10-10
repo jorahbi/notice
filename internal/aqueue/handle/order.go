@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"notice/internal/aqueue/jobtype"
-	"notice/internal/notice"
+	"github.com/jorahbi/notice/internal/aqueue/jobtype"
+	"github.com/jorahbi/notice/internal/notice"
 	"text/template"
 
 	"github.com/go-vgo/robotgo"

@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"notice/internal/aqueue/jobtype"
-	"notice/internal/aqueue/queue"
-	"notice/internal/notice"
+	"github.com/jorahbi/notice/internal/aqueue/jobtype"
+	"github.com/jorahbi/notice/internal/aqueue/queue"
+	"github.com/jorahbi/notice/internal/notice"
 	"os"
 	"text/template"
 

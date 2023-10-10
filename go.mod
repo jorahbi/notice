@@ -1,4 +1,4 @@
-module notice
+module github.com/jorahbi/notice
 
 go 1.20
 

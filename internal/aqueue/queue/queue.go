@@ -2,9 +2,9 @@ package queue
 
 import (
 	"context"
-	handler "notice/internal/aqueue/handle"
-	"notice/internal/aqueue/jobtype"
-	"notice/internal/notice"
+	handler "github.com/jorahbi/notice/internal/aqueue/handle"
+	"github.com/jorahbi/notice/internal/aqueue/jobtype"
+	"github.com/jorahbi/notice/internal/notice"
 
 	"github.com/hibiken/asynq"
 )

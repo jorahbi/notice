@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"notice/internal/aqueue/jobtype"
-	"notice/internal/notice"
+	"github.com/jorahbi/notice/internal/aqueue/jobtype"
+	"github.com/jorahbi/notice/internal/notice"
 
 	"github.com/hibiken/asynq"
 )
