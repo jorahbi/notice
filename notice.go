@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
+	"text/template"
+
 	"github.com/jorahbi/notice/internal/aqueue/jobtype"
 	"github.com/jorahbi/notice/internal/aqueue/queue"
 	"github.com/jorahbi/notice/internal/notice"
-	"os"
-	"text/template"
+	"github.com/jorahbi/notice/pkg/client"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"

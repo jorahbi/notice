@@ -1,8 +1,8 @@
 package client
 
 import (
-	"notice/internal/aqueue/jobtype"
-	"notice/internal/notice"
+	"github.com/jorahbi/notice/internal/aqueue/jobtype"
+	"github.com/jorahbi/notice/internal/notice"
 
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
