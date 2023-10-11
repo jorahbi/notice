@@ -1,4 +1,4 @@
-package notice
+package svc
 
 import (
 	"fmt"

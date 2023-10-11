@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jorahbi/notice/internal/aqueue/jobtype"
-	"github.com/jorahbi/notice/internal/notice"
+	"github.com/jorahbi/notice/internal/svc"
 	"text/template"
 
 	"github.com/go-vgo/robotgo"
@@ -16,10 +16,10 @@ import (
 //https://learnku.com/articles/75268
 
 type OrderNoticeHandler struct {
-	svcCtx *notice.ServiceContext
+	svcCtx *svc.ServiceContext
 }
 
-func NewOrderNoticeHandler(svcCtx *notice.ServiceContext) *OrderNoticeHandler {
+func NewOrderNoticeHandler(svcCtx *svc.ServiceContext) *OrderNoticeHandler {
 	return &OrderNoticeHandler{svcCtx: svcCtx}
 }
 

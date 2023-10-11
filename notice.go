@@ -9,10 +9,9 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/jorahbi/notice/internal/aqueue"
 	"github.com/jorahbi/notice/internal/aqueue/jobtype"
-	"github.com/jorahbi/notice/internal/aqueue/queue"
-	"github.com/jorahbi/notice/internal/notice"
-	"github.com/jorahbi/notice/pkg/client"
+	"github.com/jorahbi/notice/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -25,16 +24,16 @@ func main() {
 	// 这里还是去引用go-zero的配置
 	// flag.Parse()
 
-	var c notice.Config
+	var c svc.Config
 	conf.MustLoad(*configFile, &c)
-	svcCtx := notice.NewServiceContext(c)
+	svcCtx := svc.NewServiceContext(c)
 	ctx := context.Background()
 	// 这里可以看源码，类似go-zero的rest，也可以看做http
-	job := queue.NewQueue(ctx, svcCtx)
+	job := aqueue.NewQueue(ctx, svcCtx)
 	// 注册路由
 	mux := job.Register()
 	// 启动asynq服务连接redis
-	server := notice.NewAsynqServer(c.RdsConf)
+	server := svc.NewAsynqServer(c.RdsConf)
 	if err := server.Run(mux); err != nil {
 		logx.WithContext(ctx).Errorf("!!!CronJobErr!!! run err:%+v", err)
 		os.Exit(1)

@@ -1,9 +1,8 @@
 package client
 
 import (
-	"github.com/jorahbi/notice/internal/aqueue/jobtype"
-
 	"github.com/hibiken/asynq"
+	"github.com/jorahbi/notice/internal/aqueue/jobtype"
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
 
@@ -11,6 +10,12 @@ type RdsConf struct {
 	Addr     string
 	Password string
 	PoolSize int
+}
+
+type Payload struct {
+	Fo   string
+	Data any
+	Type string
 }
 
 type Client struct {
@@ -27,7 +32,7 @@ func NewAsynqClient(c RdsConf) *Client {
 	}
 }
 
-func (c Client) Send(payload any) (*asynq.TaskInfo, error) {
+func (c Client) Send(payload *Payload) (*asynq.TaskInfo, error) {
 	var data []byte
 	var err error
 
