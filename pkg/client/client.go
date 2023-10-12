@@ -6,6 +6,10 @@ import (
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
 
+const (
+	WECHAT = "wechat"
+)
+
 type RdsConf struct {
 	Addr     string
 	Password string
