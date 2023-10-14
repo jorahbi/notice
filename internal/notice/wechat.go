@@ -11,7 +11,6 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/jorahbi/coco/chain"
-	"github.com/jorahbi/notice/internal/aqueue/jobtype"
 	"github.com/jorahbi/notice/internal/svc"
 	"github.com/jorahbi/notice/pkg/client"
 )
@@ -85,7 +84,7 @@ func (l *WechatNoticeHandler) received(msg *openwechat.Message) {
 		Fo:   msg.ToUserName,
 		Data: msg.Content,
 	}
-	_, err := l.svcCtx.Client.ReveSend(jobtype.JOB_KEY_GOURMET_RECEIVED_NOTICE, &payload)
+	_, err := l.svcCtx.Client.ReveSend(client.JOB_KEY_GOURMET_RECEIVED_NOTICE, &payload)
 	reve := "收到"
 	if err != nil {
 		reve = err.Error()
