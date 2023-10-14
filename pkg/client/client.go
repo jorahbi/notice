@@ -22,6 +22,10 @@ type Payload struct {
 	Type string
 }
 
+func (p Payload) String() string {
+	return p.Data.(string)
+}
+
 type Client struct {
 	aqueue *asynq.Client
 }
@@ -37,13 +41,17 @@ func NewAsynqClient(c RdsConf) *Client {
 }
 
 func (c Client) Send(payload *Payload) (*asynq.TaskInfo, error) {
+	return c.ReveSend(jobtype.JOB_KEY_WECHAT_NOTICE, payload)
+}
+
+func (c Client) ReveSend(jobName string, payload *Payload) (*asynq.TaskInfo, error) {
 	var data []byte
 	var err error
 
 	if data, err = jsonx.Marshal(payload); err != nil {
 		return nil, err
 	}
-	return c.aqueue.Enqueue(asynq.NewTask(jobtype.JOB_KEY_WECHAT_NOTICE, data))
+	return c.aqueue.Enqueue(asynq.NewTask(jobName, data))
 }
 
 func (c Client) Close() error {
