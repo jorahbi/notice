@@ -83,8 +83,7 @@ func (l *WechatNoticeHandler) send(payload *client.Payload) {
 }
 
 func (l *WechatNoticeHandler) received(msg *openwechat.Message) {
-	// fmt.Println("=========", msg, msg.Content, msg.ToUserName) //filehelper
-	// fmt.Println(l.svcCtx.ReveGpt[received.RECE_KEY_GPT])
+	//filehelper
 	recv, err := l.svcCtx.ReveGpt[received.RECE_KEY_GPT].Event(context.TODO(), l.svcCtx.Config, client.Payload{Data: msg.Content})
 	if err != nil {
 		recv = fmt.Sprintf("%v%v", recv, err.Error())

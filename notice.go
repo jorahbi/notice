@@ -23,7 +23,6 @@ func main() {
 	zconf.MustLoad(*configFile, &c)
 	svcCtx := svc.NewServiceContext(c)
 	ctx := context.Background()
-
 	// 这里可以看源码，类似go-zero的rest，也可以看做http
 	job := aqueue.NewQueue(ctx, svcCtx)
 	// 注册路由

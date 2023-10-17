@@ -83,13 +83,13 @@ func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {
 		return "", errors.New("请输入正确的问题")
 	}
 	fmt.Printf("开始提问%v", qust)
-	cmd := exec.Command("curl", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
+	cmd := exec.Command("curl", "--max-time", "180", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
 		"--header", "Content-Type: application/json",
 		"--header", fmt.Sprintf("Authorization: Bearer %v", svcConf.GptKey),
 		"--data-raw", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
 			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
 	out, err := cmd.Output()
-
+	fmt.Println(string(out), err)
 	resp := &openai.ChatCompletionResponse{}
 	err = jsonx.Unmarshal(out, resp)
 	if err != nil {
