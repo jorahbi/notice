@@ -19,9 +19,6 @@ var configFile = flag.String("f", "etc/notice.yaml", "the config file")
 
 func main() {
 	flag.Parse()
-	// 这里还是去引用go-zero的配置
-	// flag.Parse()
-
 	var c conf.Config
 	zconf.MustLoad(*configFile, &c)
 	svcCtx := svc.NewServiceContext(c)

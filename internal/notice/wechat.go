@@ -67,7 +67,7 @@ func (l *WechatNoticeHandler) start() {
 	})
 	err = c.Error()
 	if err != nil {
-		panic(c.Error())
+		panic(err)
 	}
 
 	// 阻塞主goroutine, 直到发生异常或者用户主动退出

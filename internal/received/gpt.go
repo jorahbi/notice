@@ -3,10 +3,13 @@ package received
 import (
 	"context"
 	"fmt"
+	"os/exec"
+
 	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
+	"github.com/zeromicro/go-zero/core/jsonx"
 
 	"github.com/jorahbi/notice/internal/conf"
 	"github.com/jorahbi/notice/pkg/client"
@@ -15,6 +18,8 @@ import (
 
 var lock sync.Mutex
 var lockFlag bool
+
+const GPT_URL = "https://api.openai.com/v1/chat/completions"
 
 type Gpt struct {
 	Model       string       `json:"model"`
@@ -46,27 +51,54 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 		return "", errors.New("请说出你想问的问题")
 	}
 	qust := payload.String()
+
+	// config := openai.DefaultConfig(svcConf.GptKey)
+	// client := openai.NewClientWithConfig(config)
+	// resp, err := client.CreateChatCompletion(
+	// 	context.Background(),
+	// 	openai.ChatCompletionRequest{
+	// 		Model: openai.GPT3Dot5Turbo,
+	// 		Messages: []openai.ChatCompletionMessage{{
+	// 			Role:    openai.ChatMessageRoleUser,
+	// 			Content: qust},
+	// 		},
+	// 	},
+	// )
+	// chLen := len(resp.Choices)
+	// if err != nil || chLen == 0 {
+	// 	return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
+	// }
+
+	// return resp.Choices[chLen-1].Message.Content, nil
+	return gpt.qustion(qust, svcConf)
+}
+
+func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {
 	idx := strings.Index(qust, svcConf.GptKeywords)
+	if idx < 0 {
+		return "", nil
+	}
 	qust = strings.Trim(qust[idx:], "")
 	if len(qust) == 0 {
 		return "", errors.New("请输入正确的问题")
 	}
 	fmt.Printf("开始提问%v", qust)
-	client := openai.NewClient(svcConf.GptKey)
-	resp, err := client.CreateChatCompletion(
-		context.Background(),
-		openai.ChatCompletionRequest{
-			Model: openai.GPT3Dot5Turbo,
-			Messages: []openai.ChatCompletionMessage{{
-				Role:    openai.ChatMessageRoleUser,
-				Content: qust},
-			},
-		},
-	)
+	req := fmt.Sprintf(`{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "%v"}], "temperature": 0.7}`, qust)
+	cmd := exec.CommandContext(context.TODO(), "curl", GPT_URL,
+		"-H", "Content-Type: application/json",
+		"-H", fmt.Sprintf("Authorization: Bearer %v", svcConf.GptKey),
+		"-d", req)
+	out, err := cmd.Output()
+	resp := &openai.ChatCompletionResponse{}
+	err = jsonx.Unmarshal(out, resp)
+	if err != nil {
+		return "", err
+	}
 	chLen := len(resp.Choices)
-	if err != nil || chLen == 0 {
+	if chLen == 0 {
 		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
 	}
+	fmt.Println(resp.Choices[chLen-1].Message.Content, err)
 
 	return resp.Choices[chLen-1].Message.Content, nil
 }
