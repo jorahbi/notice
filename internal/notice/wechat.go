@@ -2,6 +2,7 @@ package notice
 
 import (
 	"fmt"
+	// "net/http"
 
 	"context"
 	"encoding/json"
@@ -11,6 +12,9 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/jorahbi/coco/chain"
+
+	// "github.com/jorahbi/notice/internal/received"
+	"github.com/jorahbi/notice/internal/received"
 	"github.com/jorahbi/notice/internal/svc"
 	"github.com/jorahbi/notice/pkg/client"
 )
@@ -79,17 +83,13 @@ func (l *WechatNoticeHandler) send(payload *client.Payload) {
 }
 
 func (l *WechatNoticeHandler) received(msg *openwechat.Message) {
-	fmt.Println(msg, msg.Content, msg.ToUserName) //filehelper
-	payload := client.Payload{
-		Fo:   msg.ToUserName,
-		Data: msg.Content,
-	}
-	_, err := l.svcCtx.Client.ReveSend(client.JOB_KEY_GOURMET_RECEIVED_NOTICE, &payload)
-	reve := "收到"
+	// fmt.Println("=========", msg, msg.Content, msg.ToUserName) //filehelper
+	// fmt.Println(l.svcCtx.ReveGpt[received.RECE_KEY_GPT])
+	recv, err := l.svcCtx.ReveGpt[received.RECE_KEY_GPT].Event(context.TODO(), l.svcCtx.Config, client.Payload{Data: msg.Content})
 	if err != nil {
-		reve = err.Error()
+		recv = fmt.Sprintf("%v%v", recv, err.Error())
 	}
-	msg.ReplyText(reve)
+	msg.ReplyText(recv)
 }
 
 func (l *WechatNoticeHandler) consoleQrCode(uuid string) {

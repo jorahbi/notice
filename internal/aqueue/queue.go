@@ -25,7 +25,7 @@ func NewQueue(ctx context.Context, svcCtx *svc.ServiceContext) *Queue {
 // register job 这里一看就和go-zero的router类似
 func (l *Queue) Register() *asynq.ServeMux {
 	mux := asynq.NewServeMux()
-	// mux.Handle(jobtype.JOB_KEY_ORDER_NOTICE, handler.NewOrderNoticeHandler(l.svcCtx))
+	// mux.Handle(jobtype.JOB_KEY_WECHAT_NOTICE, handler.NewOrderNoticeHandler(l.svcCtx))
 	mux.Handle(jobtype.JOB_KEY_WECHAT_NOTICE, notice.NewWechatNoticeHandler(l.svcCtx))
 	return mux
 }

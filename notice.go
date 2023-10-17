@@ -8,10 +8,10 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/jorahbi/notice/internal/aqueue"
+	"github.com/jorahbi/notice/internal/conf"
 	"github.com/jorahbi/notice/internal/svc"
-	"github.com/jorahbi/notice/pkg/client"
 
-	"github.com/zeromicro/go-zero/core/conf"
+	zconf "github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -22,8 +22,8 @@ func main() {
 	// 这里还是去引用go-zero的配置
 	// flag.Parse()
 
-	var c svc.Config
-	conf.MustLoad(*configFile, &c)
+	var c conf.Config
+	zconf.MustLoad(*configFile, &c)
 	svcCtx := svc.NewServiceContext(c)
 	ctx := context.Background()
 	// 这里可以看源码，类似go-zero的rest，也可以看做http
@@ -38,7 +38,7 @@ func main() {
 	}
 }
 
-func newAsynqServer(c client.RdsConf) *asynq.Server {
+func newAsynqServer(c conf.RdsConf) *asynq.Server {
 	return asynq.NewServer(
 		asynq.RedisClientOpt{
 			Addr:     c.Addr,

@@ -6,6 +6,8 @@ require (
 	github.com/eatmoreapple/openwechat v1.4.6
 	github.com/hibiken/asynq v0.24.1
 	github.com/jorahbi/coco v0.0.0-20231011053345-f5b3e2936568
+	github.com/pkg/errors v0.9.1
+	github.com/sashabaranov/go-openai v1.16.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/zeromicro/go-zero v1.5.4
 )
@@ -20,7 +22,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.9 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/redis/go-redis/v9 v9.0.3 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect

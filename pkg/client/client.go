@@ -7,8 +7,7 @@ import (
 )
 
 const (
-	WECHAT                          = "wechat"
-	JOB_KEY_GOURMET_RECEIVED_NOTICE = "job:gourmet_received_notice"
+	WECHAT = "wechat"
 )
 
 type RdsConf struct {
