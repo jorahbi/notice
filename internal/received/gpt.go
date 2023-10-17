@@ -22,9 +22,9 @@ var lockFlag bool
 const GPT_URL = "https://api.openai.com/v1/chat/completions"
 
 type Gpt struct {
-	Model       string       `json:"model"`
-	Temperature float32      `json:"temperature"`
-	Messages    []*GptReqMsg `json:"messages"`
+	Model string `json:"model"`
+	// Temperature float32      `json:"temperature"`
+	Messages []*GptReqMsg `json:"messages"`
 }
 
 type GptReqMsg struct {
@@ -78,17 +78,18 @@ func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {
 	if idx < 0 {
 		return "", nil
 	}
-	qust = strings.Trim(qust[idx:], "")
+	qust = strings.Trim(strings.ReplaceAll(qust, svcConf.GptKeywords, " "), " ")
 	if len(qust) == 0 {
 		return "", errors.New("请输入正确的问题")
 	}
 	fmt.Printf("开始提问%v", qust)
-	req := fmt.Sprintf(`{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "%v"}], "temperature": 0.7}`, qust)
-	cmd := exec.CommandContext(context.TODO(), "curl", GPT_URL,
-		"-H", "Content-Type: application/json",
-		"-H", fmt.Sprintf("Authorization: Bearer %v", svcConf.GptKey),
-		"-d", req)
+	cmd := exec.Command("curl", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
+		"--header", "Content-Type: application/json",
+		"--header", fmt.Sprintf("Authorization: Bearer %v", svcConf.GptKey),
+		"--data-raw", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
+			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
 	out, err := cmd.Output()
+
 	resp := &openai.ChatCompletionResponse{}
 	err = jsonx.Unmarshal(out, resp)
 	if err != nil {
@@ -98,7 +99,6 @@ func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {
 	if chLen == 0 {
 		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
 	}
-	fmt.Println(resp.Choices[chLen-1].Message.Content, err)
 
 	return resp.Choices[chLen-1].Message.Content, nil
 }
