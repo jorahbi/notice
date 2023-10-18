@@ -24,9 +24,7 @@ var lockFlag bool
 const GPT_URL = "https://api.openai.com/v1/chat/completions"
 
 type Gpt struct {
-	Model string `json:"model"`
-	// Temperature float32      `json:"temperature"`
-	Messages []*GptReqMsg `json:"messages"`
+	svcConf conf.Config
 }
 
 type GptReqMsg struct {
@@ -34,13 +32,11 @@ type GptReqMsg struct {
 	Content string `json:"content"`
 }
 
-func NewGpt() *Gpt {
-	os.Setenv("HTTP_PROXY", "http://127.0.0.1:7890")
-	os.Setenv("HTTPS_PROXY", "http://127.0.0.1:7890")
-	return &Gpt{}
+func NewGpt(svcConf conf.Config) *Gpt {
+	return &Gpt{svcConf: svcConf}
 }
 
-func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.Payload) (string, error) {
+func (gpt *Gpt) Event(ctx context.Context, payload client.Payload) (string, error) {
 	if lockFlag {
 		return "", errors.New("忙着呢，稍候在问!!")
 	}
@@ -49,23 +45,27 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 
 	defer func() {
 		lockFlag = false
+		os.Unsetenv("HTTP_PROXY")
+		os.Unsetenv("HTTPS_PROXY")
+		os.Unsetenv("NO_PROXY")
 		lock.Unlock()
 	}()
 	qust := payload.String()
-	idx := strings.Index(qust, svcConf.GptKeywords)
-	fmt.Println(qust, idx)
+	idx := strings.Index(qust, gpt.svcConf.GptKeywords)
 	if idx < 0 {
 		return "", nil
 	}
-	qust = strings.Trim(qust[len(svcConf.GptKeywords):], " ")
+	qust = strings.Trim(qust[len(gpt.svcConf.GptKeywords):], " ")
 	if len(qust) == 0 {
 		return "", errors.New("请说出你想问的问题")
 	}
-
-	config := openai.DefaultConfig(svcConf.GptKey)
+	os.Setenv("HTTP_PROXY", gpt.svcConf.Proxy)
+	os.Setenv("HTTPS_PROXY", gpt.svcConf.Proxy)
+	config := openai.DefaultConfig(gpt.svcConf.GptKey)
 	config.HTTPClient.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 	}
+	fmt.Printf("开始提问%v", qust)
 	client := openai.NewClientWithConfig(config)
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
@@ -77,7 +77,7 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 			},
 		},
 	)
-	fmt.Println(err)
+	fmt.Println("返回", err)
 	chLen := len(resp.Choices)
 	if err != nil || chLen == 0 {
 		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
@@ -87,14 +87,14 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 	// return gpt.qustion(qust, svcConf)
 }
 
-func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {
+func (gpt *Gpt) qustion(qust string) (string, error) {
 
 	// qust = strings.Trim(strings.ReplaceAll(qust, svcConf.GptKeywords, " "), " ")
 
 	fmt.Printf("开始提问%v", qust)
 	cmd := exec.Command("curl", "--max-time", "180", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
 		"-H", "Content-Type: application/json",
-		"-H", fmt.Sprintf("Authorization: Bearer %v", svcConf.GptKey),
+		"-H", fmt.Sprintf("Authorization: Bearer %v", gpt.svcConf.GptKey),
 		"-d", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
 			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
 	out, err := cmd.Output()

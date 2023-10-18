@@ -9,9 +9,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jorahbi/notice/internal/aqueue"
 	"github.com/jorahbi/notice/internal/conf"
-	"github.com/jorahbi/notice/internal/received"
 	"github.com/jorahbi/notice/internal/svc"
-	"github.com/jorahbi/notice/pkg/client"
 
 	zconf "github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -28,11 +26,7 @@ func main() {
 	zconf.MustLoad(*configFile, &c)
 	fmt.Println(c.GptKeywords)
 	svcCtx := svc.NewServiceContext(c)
-
 	ctx := context.Background()
-	s, e := svcCtx.ReveGpt[received.RECE_KEY_GPT].Event(ctx, svcCtx.Config, client.Payload{Data: fmt.Sprintf("@gpt%v", string(rune(8197))) + "测试"})
-	fmt.Println(s, e)
-	return
 	// 这里可以看源码，类似go-zero的rest，也可以看做http
 	job := aqueue.NewQueue(ctx, svcCtx)
 	// 注册路由

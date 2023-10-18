@@ -13,6 +13,7 @@ type Config struct {
 	RdsConf     RdsConf
 	GptKey      string
 	GptKeywords string
+	Proxy       string
 }
 
 type RdsConf struct {
