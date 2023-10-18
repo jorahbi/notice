@@ -52,7 +52,7 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 	if idx < 0 {
 		return "", nil
 	}
-	qust = strings.Trim(qust[len(svcConf.GptKeywords):], "")
+	qust = strings.Trim(qust[len(svcConf.GptKeywords):], " ")
 	if len(qust) == 0 {
 		return "", errors.New("请说出你想问的问题")
 	}
