@@ -59,6 +59,35 @@ func (gpt *Gpt) Event(ctx context.Context, payload client.Payload) (string, erro
 	if len(qust) == 0 {
 		return "", errors.New("请说出你想问的问题")
 	}
+	//return gpt.proxy(qust)
+	return gpt.qustion(qust)
+}
+
+func (gpt *Gpt) qustion(qust string) (string, error) {
+	fmt.Printf("开始提问%v", qust)
+	cmd := exec.Command("curl", "--max-time", "180", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
+		"-H", "Content-Type: application/json",
+		"-H", fmt.Sprintf("Authorization: Bearer %v", gpt.svcConf.GptKey),
+		"-d", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
+			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
+	out, err := cmd.Output()
+
+	resp := &openai.ChatCompletionResponse{}
+	err = jsonx.Unmarshal(out, resp)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	chLen := len(resp.Choices)
+	if chLen == 0 {
+		fmt.Println(string(out))
+		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
+	}
+
+	return resp.Choices[chLen-1].Message.Content, nil
+}
+
+func (gpt *Gpt) proxy(qust string) (string, error) {
 	os.Setenv("HTTP_PROXY", gpt.svcConf.Proxy)
 	os.Setenv("HTTPS_PROXY", gpt.svcConf.Proxy)
 	config := openai.DefaultConfig(gpt.svcConf.GptKey)
@@ -80,34 +109,6 @@ func (gpt *Gpt) Event(ctx context.Context, payload client.Payload) (string, erro
 	fmt.Println("返回", err)
 	chLen := len(resp.Choices)
 	if err != nil || chLen == 0 {
-		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
-	}
-
-	return resp.Choices[chLen-1].Message.Content, nil
-	// return gpt.qustion(qust, svcConf)
-}
-
-func (gpt *Gpt) qustion(qust string) (string, error) {
-
-	// qust = strings.Trim(strings.ReplaceAll(qust, svcConf.GptKeywords, " "), " ")
-
-	fmt.Printf("开始提问%v", qust)
-	cmd := exec.Command("curl", "--max-time", "180", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
-		"-H", "Content-Type: application/json",
-		"-H", fmt.Sprintf("Authorization: Bearer %v", gpt.svcConf.GptKey),
-		"-d", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
-			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
-	out, err := cmd.Output()
-
-	resp := &openai.ChatCompletionResponse{}
-	err = jsonx.Unmarshal(out, resp)
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
-	chLen := len(resp.Choices)
-	if chLen == 0 {
-		fmt.Println(string(out))
 		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
 	}
 
