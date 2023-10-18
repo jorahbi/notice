@@ -9,7 +9,9 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jorahbi/notice/internal/aqueue"
 	"github.com/jorahbi/notice/internal/conf"
+	"github.com/jorahbi/notice/internal/received"
 	"github.com/jorahbi/notice/internal/svc"
+	"github.com/jorahbi/notice/pkg/client"
 
 	zconf "github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -18,22 +20,19 @@ import (
 var configFile = flag.String("f", "etc/notice.yaml", "the config file")
 
 func main() {
-	// qust := "@gpt  历史学家"
-	// keywords := fmt.Sprintf("@gpt%v", string(rune(8197)))
-	// // strings.ReplaceAll(qust, string(rune(8197)), " ")
-	// idx := strings.Index(qust, keywords)
-	// fmt.Println("keywords idx", idx)
-	// // fmt.Println(qust, len(qust))
-	// fmt.Println(rune(qust[4]), rune(' '), string(rune(8197)), "===")
-	// //\x226\x128\x168
-
-	// return
+	os.Unsetenv("HTTP_PROXY")
+	os.Unsetenv("HTTPS_PROXY")
+	os.Unsetenv("NO_PROXY")
 	flag.Parse()
 	var c conf.Config
 	zconf.MustLoad(*configFile, &c)
 	fmt.Println(c.GptKeywords)
 	svcCtx := svc.NewServiceContext(c)
+
 	ctx := context.Background()
+	s, e := svcCtx.ReveGpt[received.RECE_KEY_GPT].Event(ctx, svcCtx.Config, client.Payload{Data: fmt.Sprintf("@gpt%v", string(rune(8197))) + "测试"})
+	fmt.Println(s, e)
+	return
 	// 这里可以看源码，类似go-zero的rest，也可以看做http
 	job := aqueue.NewQueue(ctx, svcCtx)
 	// 注册路由

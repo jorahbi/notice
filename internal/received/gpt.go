@@ -3,6 +3,8 @@ package received
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
 	"os/exec"
 
 	"strings"
@@ -33,6 +35,8 @@ type GptReqMsg struct {
 }
 
 func NewGpt() *Gpt {
+	os.Setenv("HTTP_PROXY", "http://127.0.0.1:7890")
+	os.Setenv("HTTPS_PROXY", "http://127.0.0.1:7890")
 	return &Gpt{}
 }
 
@@ -49,6 +53,7 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 	}()
 	qust := payload.String()
 	idx := strings.Index(qust, svcConf.GptKeywords)
+	fmt.Println(qust, idx)
 	if idx < 0 {
 		return "", nil
 	}
@@ -57,25 +62,29 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 		return "", errors.New("请说出你想问的问题")
 	}
 
-	// config := openai.DefaultConfig(svcConf.GptKey)
-	// client := openai.NewClientWithConfig(config)
-	// resp, err := client.CreateChatCompletion(
-	// 	context.Background(),
-	// 	openai.ChatCompletionRequest{
-	// 		Model: openai.GPT3Dot5Turbo,
-	// 		Messages: []openai.ChatCompletionMessage{{
-	// 			Role:    openai.ChatMessageRoleUser,
-	// 			Content: qust},
-	// 		},
-	// 	},
-	// )
-	// chLen := len(resp.Choices)
-	// if err != nil || chLen == 0 {
-	// 	return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
-	// }
+	config := openai.DefaultConfig(svcConf.GptKey)
+	config.HTTPClient.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+	}
+	client := openai.NewClientWithConfig(config)
+	resp, err := client.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model: openai.GPT3Dot5Turbo,
+			Messages: []openai.ChatCompletionMessage{{
+				Role:    openai.ChatMessageRoleUser,
+				Content: qust},
+			},
+		},
+	)
+	fmt.Println(err)
+	chLen := len(resp.Choices)
+	if err != nil || chLen == 0 {
+		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
+	}
 
-	// return resp.Choices[chLen-1].Message.Content, nil
-	return gpt.qustion(qust, svcConf)
+	return resp.Choices[chLen-1].Message.Content, nil
+	// return gpt.qustion(qust, svcConf)
 }
 
 func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {

@@ -5,5 +5,5 @@ RdsConf:
   PoolSize: 10
   # Addr: 127.0.0.1:19999
   # Password: 8f4KsMTieRFfM0Sz
-GptKey: "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"
+GptKey: "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"
 GptKeywords: "@gpt"
