@@ -47,10 +47,15 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 		lockFlag = false
 		lock.Unlock()
 	}()
-	if len(payload.String()) <= len(svcConf.GptKeywords) {
+	qust := payload.String()
+	idx := strings.Index(qust, svcConf.GptKeywords)
+	if idx < 0 {
+		return "", nil
+	}
+	qust = strings.Trim(qust[len(svcConf.GptKeywords):], "")
+	if len(qust) == 0 {
 		return "", errors.New("请说出你想问的问题")
 	}
-	qust := payload.String()
 
 	// config := openai.DefaultConfig(svcConf.GptKey)
 	// client := openai.NewClientWithConfig(config)
@@ -74,25 +79,20 @@ func (gpt *Gpt) Event(ctx context.Context, svcConf conf.Config, payload client.P
 }
 
 func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {
-	idx := strings.Index(qust, svcConf.GptKeywords)
-	if idx < 0 {
-		return "", nil
-	}
-	qust = strings.Trim(strings.ReplaceAll(qust, svcConf.GptKeywords, " "), " ")
-	if len(qust) == 0 {
-		return "", errors.New("请输入正确的问题")
-	}
+
+	// qust = strings.Trim(strings.ReplaceAll(qust, svcConf.GptKeywords, " "), " ")
+
 	fmt.Printf("开始提问%v", qust)
 	cmd := exec.Command("curl", "--max-time", "180", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
-		"--header", "Content-Type: application/json",
-		"--header", fmt.Sprintf("Authorization: Bearer %v", svcConf.GptKey),
-		"--data-raw", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
+		"-H", "Content-Type: application/json",
+		"-H", fmt.Sprintf("Authorization: Bearer %v", svcConf.GptKey),
+		"-d", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
 			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
 	out, err := cmd.Output()
-	fmt.Println(string(out), err)
 	resp := &openai.ChatCompletionResponse{}
 	err = jsonx.Unmarshal(out, resp)
 	if err != nil {
+		fmt.Println(err)
 		return "", err
 	}
 	chLen := len(resp.Choices)

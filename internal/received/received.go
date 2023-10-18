@@ -35,10 +35,6 @@ type GptResp struct {
 	}
 }
 
-type RequestInterface[T ReveResp] interface {
-	Send(ctx context.Context, conf conf.ReveConfig, payload client.Payload) (T, error)
-}
-
 type EventInterface interface {
 	Event(ctx context.Context, conf conf.Config, payload client.Payload) (string, error)
 }

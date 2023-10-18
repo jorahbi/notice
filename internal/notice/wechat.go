@@ -2,6 +2,7 @@ package notice
 
 import (
 	"fmt"
+	"strings"
 	// "net/http"
 
 	"context"
@@ -87,6 +88,10 @@ func (l *WechatNoticeHandler) received(msg *openwechat.Message) {
 	recv, err := l.svcCtx.ReveGpt[received.RECE_KEY_GPT].Event(context.TODO(), l.svcCtx.Config, client.Payload{Data: msg.Content})
 	if err != nil {
 		recv = fmt.Sprintf("%v%v", recv, err.Error())
+	}
+	recv = strings.Trim(recv, "")
+	if len(recv) == 0 {
+		return
 	}
 	msg.ReplyText(recv)
 }

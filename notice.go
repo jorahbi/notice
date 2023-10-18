@@ -18,9 +18,20 @@ import (
 var configFile = flag.String("f", "etc/notice.yaml", "the config file")
 
 func main() {
+	// qust := "@gpt  历史学家"
+	// keywords := fmt.Sprintf("@gpt%v", string(rune(8197)))
+	// // strings.ReplaceAll(qust, string(rune(8197)), " ")
+	// idx := strings.Index(qust, keywords)
+	// fmt.Println("keywords idx", idx)
+	// // fmt.Println(qust, len(qust))
+	// fmt.Println(rune(qust[4]), rune(' '), string(rune(8197)), "===")
+	// //\x226\x128\x168
+
+	// return
 	flag.Parse()
 	var c conf.Config
 	zconf.MustLoad(*configFile, &c)
+	fmt.Println(c.GptKeywords)
 	svcCtx := svc.NewServiceContext(c)
 	ctx := context.Background()
 	// 这里可以看源码，类似go-zero的rest，也可以看做http
