@@ -89,6 +89,7 @@ func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {
 		"-d", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
 			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
 	out, err := cmd.Output()
+
 	resp := &openai.ChatCompletionResponse{}
 	err = jsonx.Unmarshal(out, resp)
 	if err != nil {
@@ -97,6 +98,7 @@ func (gpt *Gpt) qustion(qust string, svcConf conf.Config) (string, error) {
 	}
 	chLen := len(resp.Choices)
 	if chLen == 0 {
+		fmt.Println(string(out))
 		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)
 	}
 
