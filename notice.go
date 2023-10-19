@@ -33,7 +33,7 @@ func main() {
 	job := aqueue.NewQueue(svcCtx, func() {
 		cancel()
 		server.Shutdown()
-		server.Stop()
+		os.Exit(0)
 	})
 	// 注册路由
 	mux := job.Register(ctx)
