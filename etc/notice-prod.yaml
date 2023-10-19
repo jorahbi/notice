@@ -1,0 +1,8 @@
+Name: notice
+RdsConf:
+  Addr: 127.0.0.1:19999
+  Password: 8f4KsMTieRFfM0Sz
+  PoolSize: 10
+GptKey: "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"
+GptKeywords: "@gpt"
+Proxy: http://127.0.0.1:7890

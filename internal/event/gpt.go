@@ -1,4 +1,4 @@
-package received
+package event
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/jsonx"
 
-	"github.com/jorahbi/notice/internal/conf"
+	"github.com/jorahbi/notice/internal/svc"
 	"github.com/jorahbi/notice/pkg/client"
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -21,22 +21,18 @@ import (
 var lock sync.Mutex
 var lockFlag bool
 
-const GPT_URL = "https://api.openai.com/v1/chat/completions"
-
-type Gpt struct {
-	svcConf conf.Config
-}
+type gpt struct{}
 
 type GptReqMsg struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-func NewGpt(svcConf conf.Config) *Gpt {
-	return &Gpt{svcConf: svcConf}
+func newGpt() *gpt {
+	return &gpt{}
 }
 
-func (gpt *Gpt) Event(ctx context.Context, payload client.Payload) (string, error) {
+func (e *gpt) Event(ctx context.Context, svcCtx *svc.ServiceContext, payload client.Payload) (string, error) {
 	if lockFlag {
 		return "", errors.New("忙着呢，稍候在问!!")
 	}
@@ -45,29 +41,26 @@ func (gpt *Gpt) Event(ctx context.Context, payload client.Payload) (string, erro
 
 	defer func() {
 		lockFlag = false
-		os.Unsetenv("HTTP_PROXY")
-		os.Unsetenv("HTTPS_PROXY")
-		os.Unsetenv("NO_PROXY")
 		lock.Unlock()
 	}()
-	qust := payload.String()
-	idx := strings.Index(qust, gpt.svcConf.GptKeywords)
+	qust := strings.Trim(payload.String(), " ")
+	idx := e.isCall(ctx, svcCtx, qust)
 	if idx < 0 {
 		return "", nil
 	}
-	qust = strings.Trim(qust[len(gpt.svcConf.GptKeywords):], " ")
+	qust = qust[idx+len(svcCtx.Config.GptKeywords):]
 	if len(qust) == 0 {
 		return "", errors.New("请说出你想问的问题")
 	}
-	//return gpt.proxy(qust)
-	return gpt.qustion(qust)
+	//return e.proxy(qust)
+	return e.qustion(ctx, svcCtx, qust)
 }
 
-func (gpt *Gpt) qustion(qust string) (string, error) {
-	fmt.Printf("开始提问%v", qust)
-	cmd := exec.Command("curl", "--max-time", "180", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
+func (e *gpt) qustion(ctx context.Context, svcCtx *svc.ServiceContext, qust string) (string, error) {
+	fmt.Printf("开始提问:%v", qust)
+	cmd := exec.Command("curl", "--max-time", "300", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
 		"-H", "Content-Type: application/json",
-		"-H", fmt.Sprintf("Authorization: Bearer %v", gpt.svcConf.GptKey),
+		"-H", fmt.Sprintf("Authorization: Bearer %v", svcCtx.Config.GptKey),
 		"-d", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
 			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
 	out, err := cmd.Output()
@@ -87,10 +80,27 @@ func (gpt *Gpt) qustion(qust string) (string, error) {
 	return resp.Choices[chLen-1].Message.Content, nil
 }
 
-func (gpt *Gpt) proxy(qust string) (string, error) {
-	os.Setenv("HTTP_PROXY", gpt.svcConf.Proxy)
-	os.Setenv("HTTPS_PROXY", gpt.svcConf.Proxy)
-	config := openai.DefaultConfig(gpt.svcConf.GptKey)
+func (e *gpt) isCall(ctx context.Context, svcCtx *svc.ServiceContext, msg string) int {
+	idx := strings.Index(msg, svcCtx.Config.GptKeywords)
+	if idx >= 0 {
+		return idx
+	}
+	idx = strings.Index(msg, "justyolo ")
+	if idx >= 0 {
+		return idx
+	}
+	return -1
+}
+
+func (e *gpt) proxy(ctx context.Context, svcCtx *svc.ServiceContext, qust string) (string, error) {
+	os.Setenv("HTTP_PROXY", svcCtx.Config.Proxy)
+	os.Setenv("HTTPS_PROXY", svcCtx.Config.Proxy)
+	defer func() {
+		os.Unsetenv("HTTP_PROXY")
+		os.Unsetenv("HTTPS_PROXY")
+		os.Unsetenv("NO_PROXY")
+	}()
+	config := openai.DefaultConfig(svcCtx.Config.GptKey)
 	config.HTTPClient.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 	}

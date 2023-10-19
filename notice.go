@@ -26,13 +26,18 @@ func main() {
 	zconf.MustLoad(*configFile, &c)
 	fmt.Println(c.GptKeywords)
 	svcCtx := svc.NewServiceContext(c)
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	// 这里可以看源码，类似go-zero的rest，也可以看做http
-	job := aqueue.NewQueue(ctx, svcCtx)
-	// 注册路由
-	mux := job.Register()
-	// 启动asynq服务连接redis
 	server := newAsynqServer(c.RdsConf)
+	job := aqueue.NewQueue(svcCtx, func() {
+		cancel()
+		server.Shutdown()
+	})
+	// 注册路由
+	mux := job.Register(ctx)
+	// 启动asynq服务连接redis
+
 	if err := server.Run(mux); err != nil {
 		logx.WithContext(ctx).Errorf("!!!CronJobErr!!! run err:%+v", err)
 		os.Exit(1)

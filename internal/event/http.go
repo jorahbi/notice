@@ -1,4 +1,4 @@
-package received
+package event
 
 import (
 	"bytes"

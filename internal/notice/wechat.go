@@ -3,6 +3,8 @@ package notice
 import (
 	"fmt"
 	"strings"
+	"time"
+
 	// "net/http"
 
 	"context"
@@ -15,20 +17,23 @@ import (
 	"github.com/jorahbi/coco/chain"
 
 	// "github.com/jorahbi/notice/internal/received"
-	"github.com/jorahbi/notice/internal/received"
+	// "github.com/jorahbi/notice/internal/event"
+	"github.com/jorahbi/notice/internal/event"
 	"github.com/jorahbi/notice/internal/svc"
 	"github.com/jorahbi/notice/pkg/client"
+	"github.com/samber/lo"
 )
 
 type WechatNoticeHandler struct {
+	cancal func()
 	svcCtx *svc.ServiceContext
 	bot    *openwechat.Bot
 	self   *openwechat.Self
 }
 
-func NewWechatNoticeHandler(svcCtx *svc.ServiceContext) *WechatNoticeHandler {
-	notice := &WechatNoticeHandler{svcCtx: svcCtx}
-	notice.start()
+func NewWechatNoticeHandler(ctx context.Context, svcCtx *svc.ServiceContext, cancal func()) *WechatNoticeHandler {
+	notice := &WechatNoticeHandler{svcCtx: svcCtx, cancal: cancal}
+	notice.start(ctx)
 
 	return notice
 }
@@ -43,10 +48,10 @@ func (l *WechatNoticeHandler) ProcessTask(ctx context.Context, t *asynq.Task) er
 	return nil
 }
 
-func (l *WechatNoticeHandler) start() {
+func (l *WechatNoticeHandler) start(ctx context.Context) {
 	var err error
 	fmt.Println("点击确认登录")
-	l.bot = openwechat.DefaultBot(openwechat.Desktop) // 桌面模式
+	l.bot = openwechat.DefaultBot(openwechat.Desktop, openwechat.WithContextOption(ctx)) // 桌面模式
 	// 注册消息处理函数
 	l.bot.MessageHandler = l.received
 	// 注册登陆二维码回调
@@ -56,6 +61,7 @@ func (l *WechatNoticeHandler) start() {
 	// 	return
 	// }
 	l.bot.UUIDCallback = l.consoleQrCode
+	l.bot.LogoutCallBack = l.logout
 	reloadStorage := openwechat.NewFileHotReloadStorage("etc/storage.json")
 	defer reloadStorage.Close()
 	c := chain.NewChain()
@@ -85,18 +91,28 @@ func (l *WechatNoticeHandler) send(payload *client.Payload) {
 
 func (l *WechatNoticeHandler) received(msg *openwechat.Message) {
 	//filehelper
-	recv, err := l.svcCtx.ReveGpt[received.RECE_KEY_GPT].Event(context.TODO(), client.Payload{Data: msg.Content})
+	ctx, cancel := context.WithTimeout(context.Background(), 310*time.Second)
+	defer cancel()
+	recv, err := event.MustEventFactory(event.EVENT_KEY_GPT).Event(ctx, l.svcCtx, client.Payload{Data: msg.Content})
 	if err != nil {
 		recv = fmt.Sprintf("%v%v", recv, err.Error())
 	}
 	recv = strings.Trim(recv, "")
-	if len(recv) == 0 {
+	content := []rune(strings.Trim(recv, ""))
+	if len(content) == 0 {
 		return
 	}
-	msg.ReplyText(recv)
+	for _, val := range lo.Chunk[rune](content, 500) {
+		msg.ReplyText(string(val))
+	}
 }
 
 func (l *WechatNoticeHandler) consoleQrCode(uuid string) {
 	q, _ := qrcode.New("https://login.weixin.qq.com/l/"+uuid, qrcode.Low)
 	fmt.Println(q.ToString(true))
+}
+
+func (l *WechatNoticeHandler) logout(bot *openwechat.Bot) {
+	fmt.Println("logout")
+	l.cancal()
 }

@@ -13,19 +13,19 @@ import (
 type Queue struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
+	cancel func()
 }
 
-func NewQueue(ctx context.Context, svcCtx *svc.ServiceContext) *Queue {
+func NewQueue(svcCtx *svc.ServiceContext, cancal func()) *Queue {
 	return &Queue{
-		ctx:    ctx,
 		svcCtx: svcCtx,
+		cancel: cancal,
 	}
 }
 
 // register job 这里一看就和go-zero的router类似
-func (l *Queue) Register() *asynq.ServeMux {
+func (l *Queue) Register(ctx context.Context) *asynq.ServeMux {
 	mux := asynq.NewServeMux()
-	// mux.Handle(jobtype.JOB_KEY_WECHAT_NOTICE, handler.NewOrderNoticeHandler(l.svcCtx))
-	mux.Handle(jobtype.JOB_KEY_WECHAT_NOTICE, notice.NewWechatNoticeHandler(l.svcCtx))
+	mux.Handle(jobtype.JOB_KEY_WECHAT_NOTICE, notice.NewWechatNoticeHandler(ctx, l.svcCtx, l.cancel))
 	return mux
 }
