@@ -46,7 +46,7 @@ func (e *gpt) Event(ctx context.Context, svcCtx *svc.ServiceContext, payload cli
 	if idx < 0 {
 		return "", nil
 	}
-	qust = qust[idx+len(svcCtx.Config.GPT.Keywords):]
+	qust = qust[idx:]
 	if len(qust) == 0 {
 		return "", errors.New("请说出你想问的问题")
 	}
@@ -81,11 +81,12 @@ func (e *gpt) qustion(ctx context.Context, svcCtx *svc.ServiceContext, qust stri
 func (e *gpt) isCall(ctx context.Context, svcCtx *svc.ServiceContext, msg string) int {
 	idx := strings.Index(msg, svcCtx.Config.GPT.Keywords)
 	if idx >= 0 {
-		return idx
+		return idx + len(svcCtx.Config.GPT.Keywords)
 	}
-	idx = strings.Index(msg, "justyolo ")
+	keywords := "justyolo "
+	idx = strings.Index(msg, keywords)
 	if idx >= 0 {
-		return idx
+		return idx + len(keywords)
 	}
 	return -1
 }
