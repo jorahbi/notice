@@ -3,6 +3,6 @@ RdsConf:
   Addr: 127.0.0.1:6379
   Password: ""
   PoolSize: 10
-GptKey: "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"
+GptKey: "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"
 GptKeywords: "@gpt"
 Proxy: http://127.0.0.1:7890
