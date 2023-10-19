@@ -3,8 +3,6 @@ package event
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"os"
 	"os/exec"
 
 	"strings"
@@ -48,19 +46,19 @@ func (e *gpt) Event(ctx context.Context, svcCtx *svc.ServiceContext, payload cli
 	if idx < 0 {
 		return "", nil
 	}
-	qust = qust[idx+len(svcCtx.Config.GptKeywords):]
+	qust = qust[idx+len(svcCtx.Config.GPT.Keywords):]
 	if len(qust) == 0 {
 		return "", errors.New("请说出你想问的问题")
 	}
-	//return e.proxy(qust)
-	return e.qustion(ctx, svcCtx, qust)
+	return e.proxy(ctx, svcCtx, qust)
+	// return e.qustion(ctx, svcCtx, qust)
 }
 
 func (e *gpt) qustion(ctx context.Context, svcCtx *svc.ServiceContext, qust string) (string, error) {
 	fmt.Printf("开始提问:%v", qust)
-	cmd := exec.Command("curl", "--max-time", "300", "--request", "POST", `https://api.openai.com/v1/chat/completions`,
+	cmd := exec.Command("curl", "--max-time", "300", "--request", "POST", `https://api.f2gpt.com/v1`,
 		"-H", "Content-Type: application/json",
-		"-H", fmt.Sprintf("Authorization: Bearer %v", svcCtx.Config.GptKey),
+		"-H", fmt.Sprintf("Authorization: Bearer %v", svcCtx.Config.GPT.Key),
 		"-d", fmt.Sprintf(`{"model":"%v","messages":[{"role":"%v","content":"%v"}]}`,
 			openai.GPT3Dot5Turbo, openai.ChatMessageRoleUser, qust))
 	out, err := cmd.Output()
@@ -81,7 +79,7 @@ func (e *gpt) qustion(ctx context.Context, svcCtx *svc.ServiceContext, qust stri
 }
 
 func (e *gpt) isCall(ctx context.Context, svcCtx *svc.ServiceContext, msg string) int {
-	idx := strings.Index(msg, svcCtx.Config.GptKeywords)
+	idx := strings.Index(msg, svcCtx.Config.GPT.Keywords)
 	if idx >= 0 {
 		return idx
 	}
@@ -93,17 +91,9 @@ func (e *gpt) isCall(ctx context.Context, svcCtx *svc.ServiceContext, msg string
 }
 
 func (e *gpt) proxy(ctx context.Context, svcCtx *svc.ServiceContext, qust string) (string, error) {
-	os.Setenv("HTTP_PROXY", svcCtx.Config.Proxy)
-	os.Setenv("HTTPS_PROXY", svcCtx.Config.Proxy)
-	defer func() {
-		os.Unsetenv("HTTP_PROXY")
-		os.Unsetenv("HTTPS_PROXY")
-		os.Unsetenv("NO_PROXY")
-	}()
-	config := openai.DefaultConfig(svcCtx.Config.GptKey)
-	config.HTTPClient.Transport = &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-	}
+
+	config := openai.DefaultConfig(svcCtx.Config.GPT.Key)
+	config.BaseURL = "https://api.f2gpt.com/v1"
 	fmt.Printf("开始提问%v", qust)
 	client := openai.NewClientWithConfig(config)
 	resp, err := client.CreateChatCompletion(
@@ -116,7 +106,7 @@ func (e *gpt) proxy(ctx context.Context, svcCtx *svc.ServiceContext, qust string
 			},
 		},
 	)
-	fmt.Println("返回", err)
+	fmt.Println("返回", err, resp)
 	chLen := len(resp.Choices)
 	if err != nil || chLen == 0 {
 		return "", fmt.Errorf("ChatCompletion len = 0 or error: %v", err)

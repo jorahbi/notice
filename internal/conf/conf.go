@@ -10,10 +10,15 @@ type HttpConf struct {
 }
 
 type Config struct {
-	RdsConf     RdsConf
-	GptKey      string
-	GptKeywords string
-	Proxy       string
+	RdsConf RdsConf
+	GPT     GPT
+	Proxy   string
+}
+
+type GPT struct {
+	Key      string
+	Keywords string
+	BaseUrl  string
 }
 
 type RdsConf struct {

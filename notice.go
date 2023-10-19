@@ -18,13 +18,9 @@ import (
 var configFile = flag.String("f", "etc/notice.yaml", "the config file")
 
 func main() {
-	os.Unsetenv("HTTP_PROXY")
-	os.Unsetenv("HTTPS_PROXY")
-	os.Unsetenv("NO_PROXY")
 	flag.Parse()
 	var c conf.Config
 	zconf.MustLoad(*configFile, &c)
-	fmt.Println(c.GptKeywords)
 	svcCtx := svc.NewServiceContext(c)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

@@ -15,9 +15,6 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/jorahbi/coco/chain"
-
-	// "github.com/jorahbi/notice/internal/received"
-	// "github.com/jorahbi/notice/internal/event"
 	"github.com/jorahbi/notice/internal/event"
 	"github.com/jorahbi/notice/internal/svc"
 	"github.com/jorahbi/notice/pkg/client"
