@@ -13,6 +13,15 @@ type Config struct {
 	RdsConf RdsConf
 	GPT     GPT
 	Proxy   string
+	Notices []Notice
+}
+
+type Notice struct {
+	Mode string
+	Spec string
+	To   []string
+	Tpl  string
+	Rule []string
 }
 
 type GPT struct {

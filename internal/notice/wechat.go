@@ -29,9 +29,9 @@ type WechatNoticeHandler struct {
 }
 
 func NewWechatNoticeHandler(ctx context.Context, svcCtx *svc.ServiceContext, cancal func()) *WechatNoticeHandler {
+	// svcCtx.WG.Add(1)
 	notice := &WechatNoticeHandler{svcCtx: svcCtx, cancal: cancal}
-	notice.start(ctx)
-
+	// notice.start(ctx)
 	return notice
 }
 
@@ -110,6 +110,6 @@ func (l *WechatNoticeHandler) consoleQrCode(uuid string) {
 }
 
 func (l *WechatNoticeHandler) logout(bot *openwechat.Bot) {
-	fmt.Println("logout")
+	fmt.Println("wechat logout")
 	l.cancal()
 }
