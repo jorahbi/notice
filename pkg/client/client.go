@@ -2,7 +2,7 @@ package client
 
 import (
 	"github.com/hibiken/asynq"
-	"github.com/jorahbi/notice/internal/aqueue/jobtype"
+	"github.com/jorahbi/notice/internal/worker/aqueue/jobtype"
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
 

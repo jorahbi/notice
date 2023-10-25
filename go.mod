@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/eatmoreapple/openwechat v1.4.6
 	github.com/hibiken/asynq v0.24.1
-	github.com/jorahbi/coco v0.0.0-20231011053345-f5b3e2936568
 	github.com/samber/lo v1.38.1
 	github.com/sashabaranov/go-openai v1.16.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
@@ -13,9 +12,9 @@ require (
 )
 
 require (
-	github.com/panjf2000/ants/v2 v2.8.2
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
+	golang.org/x/sys v0.10.0
 )
 
 require (
@@ -35,7 +34,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	go.uber.org/automaxprocs v1.5.2 // indirect
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
-	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

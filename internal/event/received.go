@@ -2,7 +2,7 @@ package event
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	"github.com/jorahbi/notice/internal/svc"
 	"github.com/jorahbi/notice/pkg/client"
@@ -20,17 +20,19 @@ type ReveResp interface {
 }
 
 type EventInterface interface {
-	Event(ctx context.Context, svcCtx *svc.ServiceContext, payload client.Payload) (string, error)
+	Event(ctx context.Context, svcCtx *svc.ServiceContext, payload *client.Payload) (string, error)
 }
 
-var eventHub = map[EventType]EventInterface{
-	EVENT_KEY_GPT: newGpt(),
+var Events = map[EventType]EventInterface{
+	EVENT_KEY_GPT: &gpt{},
 }
 
-func MustEventFactory(ek EventType) EventInterface {
-	event, ok := eventHub[ek]
-	if !ok {
-		panic(fmt.Sprintf("not defined event %v", ek))
+func keywords(msg string, keywords []string) int {
+	for _, keys := range keywords {
+		idx := strings.Index(msg, keys)
+		if idx >= 0 {
+			return idx + len(keys)
+		}
 	}
-	return event
+	return -1
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 
-	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -19,18 +18,21 @@ import (
 var lock sync.Mutex
 var lockFlag bool
 
-type gpt struct{}
+type gpt struct {
+	keywords []string
+}
 
 type GptReqMsg struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-func newGpt() *gpt {
-	return &gpt{}
-}
-
-func (e *gpt) Event(ctx context.Context, svcCtx *svc.ServiceContext, payload client.Payload) (string, error) {
+func (e *gpt) Event(ctx context.Context, svcCtx *svc.ServiceContext, payload *client.Payload) (string, error) {
+	qust := payload.String()
+	idx := keywords(qust, []string{svcCtx.Config.GPT.Keywords, "justyolo "})
+	if idx < 0 {
+		return "", nil
+	}
 	if lockFlag {
 		return "", errors.New("忙着呢，稍候在问!!")
 	}
@@ -41,11 +43,7 @@ func (e *gpt) Event(ctx context.Context, svcCtx *svc.ServiceContext, payload cli
 		lockFlag = false
 		lock.Unlock()
 	}()
-	qust := strings.Trim(payload.String(), " ")
-	idx := e.isCall(ctx, svcCtx, qust)
-	if idx < 0 {
-		return "", nil
-	}
+
 	qust = qust[idx:]
 	if len(qust) == 0 {
 		return "", errors.New("请说出你想问的问题")
@@ -78,21 +76,7 @@ func (e *gpt) qustion(ctx context.Context, svcCtx *svc.ServiceContext, qust stri
 	return resp.Choices[chLen-1].Message.Content, nil
 }
 
-func (e *gpt) isCall(ctx context.Context, svcCtx *svc.ServiceContext, msg string) int {
-	idx := strings.Index(msg, svcCtx.Config.GPT.Keywords)
-	if idx >= 0 {
-		return idx + len(svcCtx.Config.GPT.Keywords)
-	}
-	keywords := "justyolo "
-	idx = strings.Index(msg, keywords)
-	if idx >= 0 {
-		return idx + len(keywords)
-	}
-	return -1
-}
-
 func (e *gpt) proxy(ctx context.Context, svcCtx *svc.ServiceContext, qust string) (string, error) {
-
 	config := openai.DefaultConfig(svcCtx.Config.GPT.Key)
 	config.BaseURL = "https://api.f2gpt.com/v1"
 	fmt.Printf("开始提问%v", qust)

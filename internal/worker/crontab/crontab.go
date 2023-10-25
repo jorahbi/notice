@@ -3,7 +3,6 @@ package crontab
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/jorahbi/notice/internal/svc"
 	"github.com/robfig/cron/v3"
@@ -20,18 +19,25 @@ type CrontabIface interface {
 var (
 	ctx    context.Context
 	cancel context.CancelFunc
-	jobs   = map[string]CrontabIface{
-		JOB_NOMARL: &nomarl{},
-	}
 )
 
-func CronRun(ctx context.Context, svc *svc.ServiceContext, wg *sync.WaitGroup) {
-	wg.Add(1)
-	defer wg.Done()
+type Crontab struct {
+	jobs map[string]CrontabIface
+}
+
+func NewCrontab() *Crontab {
+	return &Crontab{
+		jobs: map[string]CrontabIface{
+			JOB_NOMARL: &nomarl{},
+		},
+	}
+}
+
+func (crontab *Crontab) Start(ctx context.Context, svc *svc.ServiceContext) {
 	// ctx, cancel = context.WithCancel(ctx)
 	c := cron.New()
 	for _, jobConf := range svc.Config.Notices {
-		job, ok := jobs[jobConf.Mode]
+		job, ok := crontab.jobs[jobConf.Mode]
 		if !ok {
 			panic("job not found")
 		}
