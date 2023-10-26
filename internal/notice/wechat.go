@@ -137,6 +137,22 @@ func (l *wechat) Send(payload *client.Payload) {
 }
 
 func (l *wechat) received(msg *openwechat.Message) {
+	// fmt.Print("消息发送者：")
+	// u, e := msg.Sender()
+	// if e == nil {
+	// 	fmt.Println(e, u.NickName, u.UserName, u.RemarkName)
+	// }
+	// fmt.Print("消息接收者：")
+	// u, e = msg.Receiver()
+	// if e == nil {
+	// 	fmt.Println(e, u.NickName, u.UserName, u.RemarkName)
+	// }
+	// fmt.Print("群组消息发送者：")
+	// u, e = msg.SenderInGroup()
+	// if e == nil {
+	// 	fmt.Println(e, u.NickName, u.UserName, u.RemarkName)
+	// }
+	// fmt.Println(msg.IsSendByFriend(), msg.Owner().NickName)
 	//filehelper
 	ctx, cancel := context.WithTimeout(context.Background(), 310*time.Second)
 	defer cancel()
@@ -146,7 +162,7 @@ func (l *wechat) received(msg *openwechat.Message) {
 		if len(content) == 0 {
 			return
 		}
-		recv, err := event.Event(ctx, l.svcCtx, &client.Payload{Data: msg.Content})
+		recv, err := event.Event(ctx, l.svcCtx, msg)
 		l.event(recv, msg, err)
 
 	}

@@ -10,7 +10,22 @@ GPT:
 Proxy: http://127.0.0.1:7890
 Jobs:
   - Name: morning
-    Spec: "@every 1s"
+    Spec: "06 19 * * *"
     To: ["何必呢123"]
     Tpl: "起床了，起床了"
+    Rule: [""]
+  - Name: noon
+    Spec: "0 12 * * *"
+    To: ["何必呢123"]
+    Tpl: "吃中午饭了"
+    Rule: [""]
+  - Name: night
+    Spec: "0 18 * * *"
+    To: ["何必呢123"]
+    Tpl: "吃中午饭了"
+    Rule: [""]
+  - Name: run
+    Spec: "0 20 * * *"
+    To: ["何必呢123"]
+    Tpl: "该运动了！"
     Rule: [""]

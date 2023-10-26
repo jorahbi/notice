@@ -10,7 +10,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-const JOB_NOMARL = "nomarl"
+const JOB_MORNING = "morning"
 
 type CrontabIface interface {
 	Start(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Job) func()
@@ -21,7 +21,7 @@ var (
 	cancel context.CancelFunc
 )
 
-type jobfn func(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Job) func()
+type jobfn func(ctx context.Context, svcCtx *svc.ServiceContext, fo string, conf conf.Job) func()
 
 type Crontab struct {
 	jobs map[string]jobfn
@@ -30,7 +30,7 @@ type Crontab struct {
 func NewCrontab() *Crontab {
 	return &Crontab{
 		jobs: map[string]jobfn{
-			JOB_NOMARL: morning,
+			JOB_MORNING: morning,
 		},
 	}
 }
@@ -42,11 +42,14 @@ func (crontab *Crontab) Start(ctx context.Context, svc *svc.ServiceContext) {
 	for _, jobConf := range svc.Config.Jobs {
 		job, ok := crontab.jobs[jobConf.Name]
 		if !ok {
-			panic("job not found")
+			logx.Infof("job[%v] not found", jobConf.Name)
+			continue
 		}
-		_, err := c.AddFunc(jobConf.Spec, job(ctx, svc, jobConf))
-		if err != nil {
-			logx.Errorf("job exec error name[%v] error[%v]", jobConf.Spec, err)
+		for _, item := range jobConf.To {
+			_, err := c.AddFunc(jobConf.Spec, job(ctx, svc, item, jobConf))
+			if err != nil {
+				logx.Errorf("job exec error name[%v] error[%v]", jobConf.Spec, err)
+			}
 		}
 	}
 	c.Start()

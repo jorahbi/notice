@@ -7,28 +7,26 @@ import (
 
 	"sync"
 
+	"github.com/eatmoreapple/openwechat"
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/jsonx"
 
 	"github.com/jorahbi/notice/internal/svc"
-	"github.com/jorahbi/notice/pkg/client"
 	openai "github.com/sashabaranov/go-openai"
 )
 
 var lock sync.Mutex
 var lockFlag bool
 
-type gpt struct {
-	keywords []string
-}
+type gpt struct{}
 
 type GptReqMsg struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-func (e *gpt) Event(ctx context.Context, svcCtx *svc.ServiceContext, payload *client.Payload) (string, error) {
-	qust := payload.String()
+func (e *gpt) Event(ctx context.Context, svcCtx *svc.ServiceContext, msg *openwechat.Message) (string, error) {
+	qust := msg.Content
 	idx := keywords(qust, []string{svcCtx.Config.GPT.Keywords, "justyolo "})
 	if idx < 0 {
 		return "", nil

@@ -2,37 +2,49 @@ package event
 
 import (
 	"context"
-	"strings"
 
+	"github.com/eatmoreapple/openwechat"
 	"github.com/jorahbi/notice/internal/svc"
-	"github.com/jorahbi/notice/pkg/client"
-	"github.com/sashabaranov/go-openai"
+	"github.com/orcaman/concurrent-map/v2"
 )
 
-type EventType string
+// 回复
+type received struct {
+	reveHub cmap.ConcurrentMap[string, chan string]
+}
 
 const (
-	EVENT_KEY_GPT EventType = "gpt"
+	REVE_CONTENT = "default"
 )
 
-type ReveResp interface {
-	openai.ChatCompletionResponse
+var reve = &received{
+	reveHub: cmap.New[chan string](),
 }
 
-type EventInterface interface {
-	Event(ctx context.Context, svcCtx *svc.ServiceContext, payload *client.Payload) (string, error)
+func ReveInstance() *received {
+	return reve
 }
 
-var Events = map[EventType]EventInterface{
-	EVENT_KEY_GPT: &gpt{},
-}
-
-func keywords(msg string, keywords []string) int {
-	for _, keys := range keywords {
-		idx := strings.Index(msg, keys)
-		if idx >= 0 {
-			return idx + len(keys)
-		}
+func (e *received) Event(ctx context.Context, svcCtx *svc.ServiceContext, msg *openwechat.Message) (string, error) {
+	user, err := msg.Sender()
+	if err != nil {
+		return "", nil
 	}
-	return -1
+	reve := e.Get(user.RemarkName)
+	reve <- msg.Content
+
+	return "", nil
+}
+
+func (e *received) Get(remarkName string) chan string {
+	reve, ok := e.reveHub.Get(remarkName)
+	if !ok {
+		reve = make(chan string)
+		e.reveHub.Set(remarkName, reve)
+	}
+	return reve
+}
+
+func (e *received) Remove(remarkName string) {
+	e.reveHub.Remove(remarkName)
 }

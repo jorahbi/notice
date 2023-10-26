@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"time"
 
 	"github.com/jorahbi/notice/internal/conf"
 	"github.com/jorahbi/notice/internal/notice"
@@ -14,6 +16,8 @@ import (
 var configFile = flag.String("f", "etc/notice.yaml", "the config file")
 
 func main() {
+	// test()
+	// return
 	flag.Parse()
 	var c conf.Config
 	zconf.MustLoad(*configFile, &c)
@@ -21,4 +25,16 @@ func main() {
 	chat := notice.NewWechat(svcCtx)
 	chat.Start(crontab.NewCrontab(), aqueue.NewAsynq())
 	// chat.Start()
+}
+
+func test() {
+	timer := time.NewTimer(0 * time.Second)
+	defer timer.Stop()
+	for i := 0; i < 10; i++ {
+		select {
+		case <-timer.C:
+			fmt.Println("corn time reve ")
+			timer.Reset(30 * time.Second)
+		}
+	}
 }
