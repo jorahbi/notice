@@ -2,7 +2,6 @@ package crontab
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jorahbi/notice/internal/conf"
 	"github.com/jorahbi/notice/internal/notice"
@@ -10,16 +9,26 @@ import (
 	"github.com/jorahbi/notice/pkg/client"
 )
 
-type nomarl0800 struct{}
-
-func (c nomarl0800) Start(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Notice) func() {
+func morning(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Job) func() {
 	return func() {
-		fmt.Println("crontab ...")
 		for _, item := range conf.To {
 			notice.Wechat().Send(&client.Payload{Fo: item, Data: conf.Tpl})
 		}
 	}
 }
-func (c nomarl0800) Stop(ctx context.Context) {
 
+func eat(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Job) func() {
+	return func() {
+		for _, item := range conf.To {
+			notice.Wechat().Send(&client.Payload{Fo: item, Data: conf.Tpl})
+		}
+	}
+}
+
+func run(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Job) func() {
+	return func() {
+		for _, item := range conf.To {
+			notice.Wechat().Send(&client.Payload{Fo: item, Data: conf.Tpl})
+		}
+	}
 }

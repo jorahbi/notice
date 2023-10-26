@@ -8,8 +8,8 @@ GPT:
   Keywords: "@gpt"
   BaseUrl: "https://api.f2gpt.com/v1"
 Proxy: http://127.0.0.1:7890
-Notices:
-  - Mode: nomarl
+Jobs:
+  - Name: morning
     Spec: "@every 1s"
     To: ["何必呢123"]
     Tpl: "起床了，起床了"

@@ -13,11 +13,11 @@ type Config struct {
 	RdsConf RdsConf
 	GPT     GPT
 	Proxy   string
-	Notices []Notice
+	Jobs    []Job
 }
 
-type Notice struct {
-	Mode string
+type Job struct {
+	Name string
 	Spec string
 	To   []string
 	Tpl  string

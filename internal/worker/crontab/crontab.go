@@ -13,8 +13,7 @@ import (
 const JOB_NOMARL = "nomarl"
 
 type CrontabIface interface {
-	Start(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Notice) func()
-	Stop(ctx context.Context)
+	Start(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Job) func()
 }
 
 var (
@@ -22,14 +21,16 @@ var (
 	cancel context.CancelFunc
 )
 
+type jobfn func(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Job) func()
+
 type Crontab struct {
-	jobs map[string]CrontabIface
+	jobs map[string]jobfn
 }
 
 func NewCrontab() *Crontab {
 	return &Crontab{
-		jobs: map[string]CrontabIface{
-			JOB_NOMARL: &nomarl0800{},
+		jobs: map[string]jobfn{
+			JOB_NOMARL: morning,
 		},
 	}
 }
@@ -38,13 +39,12 @@ func (crontab *Crontab) Start(ctx context.Context, svc *svc.ServiceContext) {
 	// ctx, cancel = context.WithCancel(ctx)
 	c := cron.New()
 	fmt.Println("crontab start ...")
-	for _, jobConf := range svc.Config.Notices {
-		job, ok := crontab.jobs[jobConf.Mode]
+	for _, jobConf := range svc.Config.Jobs {
+		job, ok := crontab.jobs[jobConf.Name]
 		if !ok {
 			panic("job not found")
 		}
-		fmt.Println(jobConf.Spec)
-		_, err := c.AddFunc(jobConf.Spec, job.Start(ctx, svc, jobConf))
+		_, err := c.AddFunc(jobConf.Spec, job(ctx, svc, jobConf))
 		if err != nil {
 			logx.Errorf("job exec error name[%v] error[%v]", jobConf.Spec, err)
 		}
