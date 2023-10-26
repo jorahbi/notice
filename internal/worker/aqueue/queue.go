@@ -15,26 +15,7 @@ import (
 	"github.com/jorahbi/notice/internal/worker/aqueue/jobtype"
 )
 
-// server := newAsynqServer(c.RdsConf)
-//
-//	job := aqueue.NewQueue(svcCtx, &wg, func() {
-//		cancel()
-//		server.Shutdown()
-//		os.Exit(0)
-//	})
-//
-// go crontab.CronRun(ctx, svcCtx, &wg)
-// 注册路由
-// job.Register(ctx)
-// mux := job.Register(ctx)
-// 启动asynq服务连接redis
-//
-//	if err := server.Run(mux); err != nil {
-//		logx.WithContext(ctx).Errorf("!!!CronJobErr!!! run err:%+v", err)
-//		os.Exit(1)
-//	}
-type Asynq struct {
-}
+type Asynq struct{}
 
 func NewAsynq() *Asynq {
 	return &Asynq{}
@@ -51,7 +32,7 @@ func (q *Asynq) Start(ctx context.Context, svc *svc.ServiceContext) {
 	for {
 		<-ctx.Done()
 		server.Shutdown()
-		fmt.Println("queue exit")
+		fmt.Println("queue down")
 		return
 	}
 }
@@ -76,6 +57,6 @@ func (q *Asynq) newAsynq(c conf.RdsConf) *asynq.Server {
 // register job 这里一看就和go-zero的router类似
 func (q *Asynq) register(ctx context.Context, svc *svc.ServiceContext) *asynq.ServeMux {
 	mux := asynq.NewServeMux()
-	mux.Handle(jobtype.JOB_KEY_WECHAT_NOTICE, notice.Wechat)
+	mux.Handle(jobtype.JOB_KEY_WECHAT_NOTICE, notice.Wechat())
 	return mux
 }

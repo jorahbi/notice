@@ -18,5 +18,7 @@ func main() {
 	var c conf.Config
 	zconf.MustLoad(*configFile, &c)
 	svcCtx := svc.NewServiceContext(c)
-	notice.Start(svcCtx, crontab.NewCrontab(), aqueue.NewAsynq())
+	chat := notice.NewWechat(svcCtx)
+	chat.Start(crontab.NewCrontab(), aqueue.NewAsynq())
+	// chat.Start()
 }

@@ -11,6 +11,6 @@ Proxy: http://127.0.0.1:7890
 Notices:
   - Mode: nomarl
     Spec: "@every 1s"
-    To: ["", ""]
-    Tpl: ""
+    To: ["何必呢123"]
+    Tpl: "起床了，起床了"
     Rule: [""]

@@ -21,10 +21,11 @@ import (
 	"github.com/zeromicro/go-zero/core/threading"
 )
 
-type WechatNoticeHandler struct {
+type wechat struct {
 	svcCtx *svc.ServiceContext
 	bot    *openwechat.Bot
 	self   *openwechat.Self
+	timer  *time.Timer
 }
 
 type WorkerInterface interface {
@@ -33,43 +34,45 @@ type WorkerInterface interface {
 
 var ctx context.Context
 var cancel context.CancelFunc
-var Wechat asynq.Handler
 
-func Start(svcCtx *svc.ServiceContext, works ...WorkerInterface) {
+func NewWechat(svcCtx *svc.ServiceContext) *wechat {
 	ctx, cancel = context.WithCancel(context.Background())
+	chat := &wechat{svcCtx: svcCtx, timer: time.NewTimer(300 * time.Second)}
+	setNotice(NOTICE_WECHAT, chat)
+	return chat
+}
+
+func (l *wechat) Start(works ...WorkerInterface) {
 	defer cancel()
-	chat := &WechatNoticeHandler{svcCtx: svcCtx}
-	works = append(works, chat)
 	group := threading.NewRoutineGroup()
-	chat.bot = openwechat.DefaultBot(openwechat.Desktop, openwechat.WithContextOption(ctx)) // 桌面模式
-	Wechat = chat
+	group.RunSafe(func() {
+		l.waitForSignals(ctx)
+	})
+	l.start(ctx)
 	for _, work := range works {
 		work := work
 		group.RunSafe(func() {
-			work.Start(ctx, svcCtx)
+			work.Start(ctx, l.svcCtx)
 		})
 	}
-	group.RunSafe(func() {
-		chat.waitForSignals(ctx)
-	})
-
+	l.bot.Block()
 	group.Wait()
 }
 
-func (l *WechatNoticeHandler) ProcessTask(ctx context.Context, t *asynq.Task) error {
+func (l *wechat) ProcessTask(ctx context.Context, t *asynq.Task) error {
 	p := &client.Payload{}
 	var err error
 	if err = json.Unmarshal(t.Payload(), p); err != nil {
 		return err
 	}
-	l.send(p)
+	l.Send(p)
 	return nil
 }
 
-func (l WechatNoticeHandler) Start(ctx context.Context, svcCtx *svc.ServiceContext) {
+func (l *wechat) start(ctx context.Context) {
 	var err error
 	fmt.Println("点击确认登录")
-
+	l.bot = openwechat.DefaultBot(openwechat.Desktop, openwechat.WithContextOption(ctx)) // 桌面模式
 	// 注册消息处理函数
 	l.bot.MessageHandler = l.received
 	// 注册登陆二维码回调
@@ -93,37 +96,39 @@ func (l WechatNoticeHandler) Start(ctx context.Context, svcCtx *svc.ServiceConte
 		return
 	}
 	// 阻塞主goroutine, 直到发生异常或者用户主动退出
-	l.bot.Block()
+	l.timer.Stop()
+
 }
 
 // waitForSignals waits for signals and handles them.
 // It handles SIGTERM, SIGINT, and SIGTSTP.
 // SIGTERM and SIGINT will signal the process to exit.
 // SIGTSTP will signal the process to stop processing new tasks.
-func (l *WechatNoticeHandler) waitForSignals(ctx context.Context) {
+func (l *wechat) waitForSignals(ctx context.Context) {
 	fmt.Println("Send signal TERM or INT or TSTP to stop processing new tasks")
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, unix.SIGTERM, unix.SIGINT, unix.SIGTSTP)
-	var timeout time.Duration = 300
-	timer := time.NewTimer(timeout * time.Second)
-	defer timer.Stop()
+	defer l.timer.Stop()
+
 	for {
 		select {
 		case <-sigs:
+			fmt.Println("sigs exit")
 			l.bot.Exit()
 			return
 		case <-ctx.Done():
+			fmt.Println("done exit")
 			return
-		case <-timer.C:
-			fmt.Printf("timeout login [%v] second", timeout)
+		case <-l.timer.C:
+			fmt.Printf("timeout login [%v] second", 300)
 			cancel()
-			return
+			os.Exit(0)
 		}
 
 	}
 }
 
-func (l *WechatNoticeHandler) send(payload *client.Payload) {
+func (l *wechat) Send(payload *client.Payload) {
 	self, err := l.bot.GetCurrentUser()
 	fmt.Println(err)
 	friends, err := self.Friends()
@@ -131,7 +136,7 @@ func (l *WechatNoticeHandler) send(payload *client.Payload) {
 	fmt.Println(payload)
 }
 
-func (l *WechatNoticeHandler) received(msg *openwechat.Message) {
+func (l *wechat) received(msg *openwechat.Message) {
 	//filehelper
 	ctx, cancel := context.WithTimeout(context.Background(), 310*time.Second)
 	defer cancel()
@@ -147,7 +152,7 @@ func (l *WechatNoticeHandler) received(msg *openwechat.Message) {
 	}
 }
 
-func (l *WechatNoticeHandler) event(recv string, msg *openwechat.Message, err error) {
+func (l *wechat) event(recv string, msg *openwechat.Message, err error) {
 	if err != nil {
 		recv = fmt.Sprintf("%v%v", recv, err.Error())
 	}
@@ -160,12 +165,12 @@ func (l *WechatNoticeHandler) event(recv string, msg *openwechat.Message, err er
 	}
 }
 
-func (l *WechatNoticeHandler) consoleQrCode(uuid string) {
+func (l *wechat) consoleQrCode(uuid string) {
 	q, _ := qrcode.New("https://login.weixin.qq.com/l/"+uuid, qrcode.Low)
 	fmt.Println(q.ToString(true))
 }
 
-func (l *WechatNoticeHandler) logout(bot *openwechat.Bot) {
+func (l *wechat) logout(bot *openwechat.Bot) {
 	fmt.Println("wechat logout")
 	cancel()
 }
