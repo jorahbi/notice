@@ -22,7 +22,7 @@ Jobs:
   - Name: night
     Spec: "0 18 * * *"
     To: ["carolin"]
-    Tpl: "吃中午饭了"
+    Tpl: "该吃晚饭了"
     Rule: [""]
   - Name: run
     Spec: "0 20 * * *"

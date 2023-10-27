@@ -8,3 +8,24 @@ GPT:
   Keywords: "@gpt"
   BaseUrl: "https://api.f2gpt.com/v1"
 Proxy: http://127.0.0.1:7890
+Jobs:
+  - Name: morning
+    Spec: "50 07 * * *"
+    To: ["carolin"] # carolin
+    Tpl: "起床了，起床了"
+    Rule: [""]
+  - Name: noon
+    Spec: "0 12 * * *"
+    To: ["carolin"]
+    Tpl: "吃中午饭了"
+    Rule: [""]
+  - Name: night
+    Spec: "0 18 * * *"
+    To: ["carolin"]
+    Tpl: "吃中午饭了"
+    Rule: [""]
+  - Name: run
+    Spec: "0 20 * * *"
+    To: ["carolin"]
+    Tpl: "该运动运动了！"
+    Rule: [""]

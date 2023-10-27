@@ -10,7 +10,12 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-const JOB_MORNING = "morning"
+const (
+	JOB_MORNING = "morning"
+	JOB_NOON    = "noon"
+	JOB_NIGHT   = "night"
+	JOB_RUN     = "run"
+)
 
 type CrontabIface interface {
 	Start(ctx context.Context, svcCtx *svc.ServiceContext, conf conf.Job) func()
@@ -31,6 +36,9 @@ func NewCrontab() *Crontab {
 	return &Crontab{
 		jobs: map[string]jobfn{
 			JOB_MORNING: morning,
+			JOB_NOON:    noon,
+			JOB_NIGHT:   night,
+			JOB_RUN:     run,
 		},
 	}
 }
