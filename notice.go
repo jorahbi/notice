@@ -16,8 +16,6 @@ import (
 var configFile = flag.String("f", "etc/notice.yaml", "the config file")
 
 func main() {
-	// test()
-	// return
 	flag.Parse()
 	var c conf.Config
 	zconf.MustLoad(*configFile, &c)
