@@ -37,9 +37,8 @@ var cancel context.CancelFunc
 
 func NewWechat(svcCtx *svc.ServiceContext) *wechat {
 	ctx, cancel = context.WithCancel(context.Background())
-	chat := &wechat{svcCtx: svcCtx, timer: time.NewTimer(300 * time.Second)}
-	setNotice(NOTICE_WECHAT, chat)
-	return chat
+	wx.svcCtx = svcCtx
+	return wx
 }
 
 func (l *wechat) Start(works ...WorkerInterface) {
